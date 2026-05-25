@@ -1,0 +1,1408 @@
+<html lang="ru" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Шкала категорий вмешательства переводчика</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js/dist/chart.umd.min.js"></script>
+  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
+
+  <style>
+    :root {
+      --radius: 22px;
+      --shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
+    }
+
+    html[data-theme="dark"] {
+      --bg: #0f1115;
+      --surface: rgba(255, 255, 255, 0.06);
+      --surface-2: rgba(255, 255, 255, 0.08);
+      --panel: rgba(255, 255, 255, 0.045);
+      --border: rgba(255, 255, 255, 0.12);
+      --text: #f5f7fb;
+      --muted: rgba(245, 247, 251, 0.66);
+      --faint: rgba(245, 247, 251, 0.44);
+      --accent: #6fd3c2;
+      --accent-2: #c7e7df;
+      --danger: #ff8f8f;
+      --tooltip-bg: #171a21;
+      --input-bg: rgba(255, 255, 255, 0.05);
+      --warning-bg: rgba(255, 196, 0, 0.08);
+      --warning-border: rgba(255, 196, 0, 0.22);
+      --warning-text: #f3d77e;
+    }
+
+    html[data-theme="light"] {
+      --bg: #f5f6f8;
+      --surface: rgba(255, 255, 255, 0.9);
+      --surface-2: rgba(255, 255, 255, 0.92);
+      --panel: rgba(255, 255, 255, 0.8);
+      --border: rgba(18, 24, 35, 0.12);
+      --text: #18202b;
+      --muted: rgba(24, 32, 43, 0.72);
+      --faint: rgba(24, 32, 43, 0.5);
+      --accent: #167a69;
+      --accent-2: #14584d;
+      --danger: #b83245;
+      --tooltip-bg: #ffffff;
+      --input-bg: rgba(255, 255, 255, 0.92);
+      --shadow: 0 18px 44px rgba(29, 41, 57, 0.08);
+      --warning-bg: rgba(210, 153, 0, 0.08);
+      --warning-border: rgba(210, 153, 0, 0.25);
+      --warning-text: #8a5b00;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      font-family: 'Inter', sans-serif;
+      background:
+        radial-gradient(circle at top left, color-mix(in srgb, var(--accent) 12%, transparent), transparent 32%),
+        radial-gradient(circle at bottom right, color-mix(in srgb, var(--accent) 8%, transparent), transparent 28%),
+        var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      transition: background 0.2s ease, color 0.2s ease;
+    }
+
+    .page {
+      max-width: 1480px;
+      margin: 0 auto;
+      padding: 28px;
+    }
+
+    .header,
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 24px;
+      margin-bottom: 24px;
+      padding: 24px 28px;
+    }
+
+    .brand-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.6rem, 2vw, 2.2rem);
+      line-height: 1.15;
+      margin-bottom: 10px;
+    }
+
+    .brand-subtitle {
+      max-width: 920px;
+      color: var(--muted);
+      font-size: 0.98rem;
+    }
+
+    .theme-toggle,
+    .btn {
+      border-radius: 999px;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    .theme-toggle {
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      padding: 11px 16px;
+      font-weight: 600;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1.08fr 1fr;
+      gap: 24px;
+    }
+
+    .panel {
+      overflow: hidden;
+    }
+
+    .panel-head {
+      padding: 22px 24px 10px;
+      border-bottom: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+    }
+
+    .panel-title {
+      font-size: 1.06rem;
+      font-weight: 600;
+    }
+
+    .panel-subtitle {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .panel-body {
+      padding: 22px 24px 24px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .label-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    label {
+      font-size: 0.94rem;
+      font-weight: 600;
+    }
+
+    .tooltip {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.72rem;
+      cursor: help;
+    }
+
+    .tooltip::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      left: 50%;
+      bottom: calc(100% + 10px);
+      transform: translateX(-50%);
+      min-width: 260px;
+      max-width: 360px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: var(--tooltip-bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 0.8rem;
+      line-height: 1.45;
+      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.16);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.18s ease;
+      z-index: 20;
+      white-space: normal;
+    }
+
+    .tooltip:hover::after,
+    .tooltip:focus-visible::after {
+      opacity: 1;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      border: 1px solid var(--border);
+      background: var(--input-bg);
+      color: var(--text);
+      border-radius: 16px;
+      padding: 14px 16px;
+      font: inherit;
+      outline: none;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    }
+
+    select option {
+      color: #111;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: color-mix(in srgb, var(--accent) 70%, white 10%);
+      box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 14%, transparent);
+    }
+
+    textarea {
+      min-height: 190px;
+      resize: vertical;
+    }
+
+    .inline-note,
+    .help-box,
+    .upload-box,
+    .table-wrap,
+    .chart-box,
+    .summary-box,
+    .mode-panel,
+    .detail-block,
+    .debug-box {
+      margin-top: 8px;
+      padding: 14px 16px;
+      border-radius: 18px;
+      background: var(--surface);
+      border: 1px solid color-mix(in srgb, var(--border) 85%, transparent);
+      color: var(--muted);
+      font-size: 0.87rem;
+    }
+
+    .upload-box {
+      margin-top: 0;
+      display: grid;
+      gap: 10px;
+    }
+
+    .actions,
+    .status-row,
+    .export-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+    }
+
+    .btn {
+      border: none;
+      padding: 13px 18px;
+      font-weight: 600;
+      transition: transform 0.15s ease, opacity 0.15s ease, box-shadow 0.2s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .btn-primary {
+      background: linear-gradient(
+        135deg,
+        var(--accent),
+        color-mix(in srgb, var(--accent) 55%, white 45%)
+      );
+      color: #10211e;
+      box-shadow: 0 10px 30px color-mix(in srgb, var(--accent) 24%, transparent);
+    }
+
+    html[data-theme="light"] .btn-primary {
+      color: white;
+    }
+
+    .btn-secondary {
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--muted);
+    }
+
+    .badge.accent {
+      background: color-mix(in srgb, var(--accent) 12%, transparent);
+      color: var(--accent-2);
+      border-color: color-mix(in srgb, var(--accent) 26%, transparent);
+    }
+
+    .badge.warning {
+      background: var(--warning-bg);
+      color: var(--warning-text);
+      border-color: var(--warning-border);
+    }
+
+    .criteria-grid,
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .criterion-card,
+    .case-box {
+      padding: 14px 16px;
+      border-radius: 18px;
+      background: var(--surface);
+      border: 1px solid color-mix(in srgb, var(--border) 85%, transparent);
+    }
+
+    .criterion-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 8px;
+    }
+
+    .criterion-name {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 600;
+    }
+
+    .score {
+      min-width: 52px;
+      text-align: center;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--accent) 14%, transparent);
+      border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent);
+      color: var(--accent-2);
+      font-weight: 700;
+    }
+
+    .criterion-comment {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .summary-box h3,
+    .help-box h3,
+    .chart-box h3,
+    .table-wrap h3,
+    .mode-panel h3,
+    .detail-block h3,
+    .debug-box h3 {
+      font-size: 0.98rem;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+
+    .table-wrap table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+      margin-top: 8px;
+    }
+
+    .table-wrap th,
+    .table-wrap td {
+      text-align: left;
+      padding: 10px 8px;
+      border-bottom: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+      color: var(--muted);
+      vertical-align: top;
+    }
+
+    .table-wrap th {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .chart-canvas-wrap {
+      position: relative;
+      min-height: 280px;
+      margin-top: 10px;
+    }
+
+    .error {
+      margin-top: 14px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: color-mix(in srgb, var(--danger) 10%, transparent);
+      border: 1px solid color-mix(in srgb, var(--danger) 26%, transparent);
+      color: var(--danger);
+      font-size: 0.9rem;
+      display: none;
+    }
+
+    .loader {
+      display: none;
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .footer {
+      margin-top: 24px;
+      text-align: center;
+      color: var(--faint);
+      font-size: 0.83rem;
+    }
+
+    .parallel-results {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .mode-panel h4 {
+      margin-top: 10px;
+      margin-bottom: 6px;
+      font-size: 0.9rem;
+      color: var(--text);
+    }
+
+    .mode-panel ul,
+    .detail-block ul {
+      padding-left: 18px;
+      margin-top: 8px;
+    }
+
+    .mode-panel li,
+    .detail-block li {
+      margin-bottom: 6px;
+    }
+
+    .mini-meta {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin: 8px 0 10px;
+    }
+
+    .debug-pre {
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.8rem;
+      line-height: 1.45;
+      color: var(--muted);
+      max-height: 220px;
+      overflow: auto;
+      margin-top: 8px;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    @media (max-width: 1180px) {
+      .layout,
+      .parallel-results {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 980px) {
+      .header {
+        flex-direction: column;
+      }
+
+      .grid-2 {
+        grid-template-columns: 1fr;
+      }
+
+      .page {
+        padding: 16px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="page">
+    <section class="header">
+      <div>
+        <div class="brand-title">Шкала категорий вмешательства переводчика</div>
+        <div class="brand-subtitle">
+          Академический инструмент для forensic-анализа художественного перевода по пяти параметрам:
+          cultural, emotional, pragmatic, stylistic и semantic. Основная цель — не общая сводка,
+          а прозрачная фиксация всех наблюдаемых различий между оригиналом и переводом.
+        </div>
+      </div>
+
+      <button class="theme-toggle" id="themeToggle">Светлая тема</button>
+    </section>
+
+    <section class="layout">
+      <section class="panel">
+        <div class="panel-head">
+          <div class="panel-title">Параметры анализа</div>
+          <div class="panel-subtitle">
+            Введите или загрузите оригинал и перевод, выберите prompt version
+            и режим анализа, затем запустите сопоставление.
+          </div>
+        </div>
+
+        <div class="panel-body">
+          <div class="grid-2">
+            <div class="field">
+              <div class="label-row">
+                <label for="sourceLang">Язык оригинала</label>
+                <span
+                  tabindex="0"
+                  class="tooltip"
+                  data-tooltip="Можно выбрать язык вручную или оставить автоматическое определение."
+                >?</span>
+              </div>
+
+              <select id="sourceLang">
+                <option value="auto">Автоматическое определение</option>
+                <option value="de" selected>Немецкий</option>
+                <option value="ru">Русский</option>
+                <option value="en">Английский</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <div class="label-row">
+                <label for="targetLang">Язык перевода</label>
+                <span
+                  tabindex="0"
+                  class="tooltip"
+                  data-tooltip="Можно выбрать язык вручную или оставить автоматическое определение."
+                >?</span>
+              </div>
+
+              <select id="targetLang">
+                <option value="auto">Автоматическое определение</option>
+                <option value="ru" selected>Русский</option>
+                <option value="de">Немецкий</option>
+                <option value="en">Английский</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="field">
+              <div class="label-row">
+                <label for="promptVersion">Версия промпта</label>
+                <span
+                  tabindex="0"
+                  class="tooltip"
+                  data-tooltip="MASTER — основной forensic-режим. A/B/C/D сохранены для исследовательского сравнения."
+                >?</span>
+              </div>
+
+              <select id="promptVersion">
+                <option value="MASTER" selected>MASTER — forensic / основной</option>
+                <option value="A">A — минимальный baseline</option>
+                <option value="B">B — с операциональными определениями</option>
+                <option value="C">C — с логикой различения параметров</option>
+                <option value="D">D — пошаговый протокол</option>
+              </select>
+
+              <div class="inline-note" id="promptVersionDescription"></div>
+            </div>
+
+            <div class="field">
+              <div class="label-row">
+                <label for="analysisMode">Режим анализа</label>
+                <span
+                  tabindex="0"
+                  class="tooltip"
+                  data-tooltip="overview — краткая картина; detail — полный case-based анализ; research — строгий исследовательский режим; all — все три сразу."
+                >?</span>
+              </div>
+
+              <select id="analysisMode">
+                <option value="overview">Обзорный</option>
+                <option value="detail">Подробный</option>
+                <option value="research">Исследовательский</option>
+                <option value="all">Все три сразу</option>
+              </select>
+
+              <div class="inline-note" id="analysisModeDescription"></div>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="upload-box">
+              <div class="label-row">
+                <label for="sourceFile">Файл оригинала</label>
+                <span
+                  tabindex="0"
+                  class="tooltip"
+                  data-tooltip="Поддерживаются .txt, .md, .docx, .pdf. Для сканированных PDF используется OCR."
+                >?</span>
+              </div>
+
+              <input id="sourceFile" type="file" accept=".txt,.md,.docx,.pdf" />
+              <div class="inline-note">TXT, MD, DOCX, PDF. Для сканированных PDF используется OCR.</div>
+            </div>
+
+            <div class="upload-box">
+              <div class="label-row">
+                <label for="targetFile">Файл перевода</label>
+                <span
+                  tabindex="0"
+                  class="tooltip"
+                  data-tooltip="Поддерживаются .txt, .md, .docx, .pdf. Для сканированных PDF используется OCR."
+                >?</span>
+              </div>
+
+              <input id="targetFile" type="file" accept=".txt,.md,.docx,.pdf" />
+              <div class="inline-note">TXT, MD, DOCX, PDF. Для сканированных PDF используется OCR.</div>
+            </div>
+          </div>
+
+          <div class="field">
+            <div class="label-row">
+              <label for="sourceText">Оригинал</label>
+              <span
+                tabindex="0"
+                class="tooltip"
+                data-tooltip="Вставьте исходный текст, если не загружаете файл."
+              >?</span>
+            </div>
+
+            <textarea
+              id="sourceText"
+              placeholder="Вставьте текст оригинала или загрузите файл выше"
+            ></textarea>
+          </div>
+
+          <div class="field">
+            <div class="label-row">
+              <label for="targetText">Перевод</label>
+              <span
+                tabindex="0"
+                class="tooltip"
+                data-tooltip="Вставьте перевод, если не загружаете файл."
+              >?</span>
+            </div>
+
+            <textarea
+              id="targetText"
+              placeholder="Вставьте текст перевода или загрузите файл выше"
+            ></textarea>
+          </div>
+
+          <div class="actions">
+            <button class="btn btn-primary" id="analyzeButton">Запустить анализ</button>
+            <button class="btn btn-secondary" id="clearButton">Очистить поля</button>
+          </div>
+
+          <div class="export-row">
+            <button class="btn btn-secondary" id="exportJsonButton">Экспорт JSON</button>
+            <button class="btn btn-secondary" id="exportMdButton">Экспорт MD</button>
+          </div>
+
+          <div class="status-row">
+            <div class="badge accent" id="activePromptBadge">Промпт: MASTER</div>
+            <div class="badge" id="activeModeBadge">Режим: Обзорный</div>
+            <div class="badge" id="activeThemeBadge">Тема: Тёмная</div>
+          </div>
+
+          <div class="loader" id="loader">Выполняется анализ… Пожалуйста, подождите.</div>
+          <div class="error" id="errorBox"></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <div class="panel-title">Результаты и визуализация</div>
+          <div class="panel-subtitle">
+            Ниже отображаются summary, таблица, график, forensic-cases и debug/meta-блоки.
+          </div>
+        </div>
+
+        <div class="panel-body">
+          <div class="help-box">
+            <h3>Почему рекомендуется версия MASTER</h3>
+            <p>
+              MASTER объединяет операциональные определения критериев, правила различения параметров,
+              пошаговый протокол и требование сначала собирать cases, а уже потом формировать summary.
+              Это основной режим, когда нужен не обзор, а максимально прозрачная фиксация различий.
+            </p>
+          </div>
+
+          <div class="summary-box" id="resultSummary">
+            <h3>Итог анализа</h3>
+            <p>После запуска здесь появится сводка по результатам сопоставления.</p>
+          </div>
+
+          <div class="status-row" id="metaBadges">
+            <div class="badge">Модель: —</div>
+            <div class="badge">Промпт: —</div>
+            <div class="badge">Режим: —</div>
+          </div>
+
+          <div class="debug-box" id="debugBox">
+            <h3>Техническая диагностика</h3>
+            <p>После запуска здесь появятся meta/debug-поля, если backend их вернёт.</p>
+          </div>
+
+          <div class="table-wrap" id="resultsTableWrap">
+            <h3>Таблица параметров</h3>
+            <p>После запуска анализа здесь появится таблица с баллами и комментариями.</p>
+          </div>
+
+          <div class="chart-box">
+            <h3>Графическое представление</h3>
+            <div class="chart-canvas-wrap">
+              <canvas id="scoresChart"></canvas>
+            </div>
+          </div>
+
+          <div class="criteria-grid" id="criteriaGrid"></div>
+          <div class="detail-grid" id="detailBlocks"></div>
+          <div class="parallel-results" id="parallelResults"></div>
+        </div>
+      </section>
+    </section>
+
+    <div class="footer">
+      Веб-прототип исследовательского инструмента для оценки степени вмешательства переводчика в художественном переводе.
+    </div>
+  </main>
+
+  <script>
+    const promptVersion = document.getElementById('promptVersion');
+    const analysisMode = document.getElementById('analysisMode');
+    const sourceLang = document.getElementById('sourceLang');
+    const targetLang = document.getElementById('targetLang');
+    const sourceText = document.getElementById('sourceText');
+    const targetText = document.getElementById('targetText');
+    const sourceFile = document.getElementById('sourceFile');
+    const targetFile = document.getElementById('targetFile');
+    const analyzeButton = document.getElementById('analyzeButton');
+    const clearButton = document.getElementById('clearButton');
+    const exportJsonButton = document.getElementById('exportJsonButton');
+    const exportMdButton = document.getElementById('exportMdButton');
+    const loader = document.getElementById('loader');
+    const errorBox = document.getElementById('errorBox');
+    const resultSummary = document.getElementById('resultSummary');
+    const criteriaGrid = document.getElementById('criteriaGrid');
+    const detailBlocks = document.getElementById('detailBlocks');
+    const parallelResults = document.getElementById('parallelResults');
+    const metaBadges = document.getElementById('metaBadges');
+    const resultsTableWrap = document.getElementById('resultsTableWrap');
+    const activePromptBadge = document.getElementById('activePromptBadge');
+    const activeModeBadge = document.getElementById('activeModeBadge');
+    const activeThemeBadge = document.getElementById('activeThemeBadge');
+    const promptVersionDescription = document.getElementById('promptVersionDescription');
+    const analysisModeDescription = document.getElementById('analysisModeDescription');
+    const themeToggle = document.getElementById('themeToggle');
+    const rootEl = document.documentElement;
+    const debugBox = document.getElementById('debugBox');
+
+    const promptDescriptions = {
+      MASTER: 'Основной forensic-режим: сначала cases, затем summary и scores.',
+      A: 'Минимальный baseline без развитой forensic-логики.',
+      B: 'Версия с операциональными определениями критериев.',
+      C: 'Версия с дополнительной логикой различения параметров.',
+      D: 'Пошаговый аналитический протокол.'
+    };
+
+    const modeDescriptions = {
+      overview: 'Краткая общая картина по пяти параметрам.',
+      detail: 'Максимально полный case-based анализ с evidence по каждому наблюдению.',
+      research: 'Строгий исследовательский режим с cases, uncertain и ambiguous items.',
+      all: 'Три режима сразу: overview, detail и research.'
+    };
+
+    const criterionLabels = {
+      cultural: 'Культурная адаптация',
+      emotional: 'Эмоциональный регистр',
+      pragmatic: 'Прагматическая адаптация',
+      stylistic: 'Стилистическая адаптация',
+      semantic: 'Информационно-семантическая трансформация'
+    };
+
+    const criterionTooltips = {
+      cultural: 'Изменения культурно-специфических, религиозных, ценностных и социокультурных элементов.',
+      emotional: 'Изменение эмоциональной тональности, интенсивности, оценочности и аффективной окраски.',
+      pragmatic: 'Изменение коммуникативной функции, иллокутивной силы, степени прямоты, вежливости и адресованности.',
+      stylistic: 'Изменение художественной формы, регистра, синтаксиса, ритма и образности.',
+      semantic: 'Изменение фактуального содержания, смысловых акцентов, логических связей и объёма информации.'
+    };
+
+    let scoresChart;
+    let lastChartParams = {};
+    let lastResultData = null;
+
+    function updateDescriptions() {
+      const pv = promptVersion.value;
+      const am = analysisMode.value;
+
+      promptVersionDescription.textContent = promptDescriptions[pv];
+      analysisModeDescription.textContent = modeDescriptions[am];
+      activePromptBadge.textContent = `Промпт: ${pv}`;
+      activeModeBadge.textContent = `Режим: ${analysisMode.options[analysisMode.selectedIndex].text}`;
+
+      const isLight = rootEl.getAttribute('data-theme') === 'light';
+      activeThemeBadge.textContent = `Тема: ${isLight ? 'Светлая' : 'Тёмная'}`;
+      themeToggle.textContent = isLight ? 'Тёмная тема' : 'Светлая тема';
+    }
+
+    function showError(message) {
+      errorBox.style.display = 'block';
+      errorBox.textContent = message;
+    }
+
+    function clearError() {
+      errorBox.style.display = 'none';
+      errorBox.textContent = '';
+    }
+
+    function truncate(text, max = 220) {
+      const t = String(text || '').trim();
+      return t.length > max ? t.slice(0, max) + '…' : t;
+    }
+
+    function escapeHtml(text) {
+      return String(text || '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+    }
+
+    function renderChart(params = {}) {
+      const labels = Object.keys(criterionLabels).map(k => criterionLabels[k]);
+      const scores = Object.keys(criterionLabels).map(k => Number(params[k]?.score ?? 0));
+      const ctx = document.getElementById('scoresChart');
+
+      if (scoresChart) scoresChart.destroy();
+
+      const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+      const axisColor = isLight ? '#18202b' : '#f5f7fb';
+
+      scoresChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [
+            {
+              label: 'Баллы по критериям',
+              data: scores,
+              backgroundColor: ['#2f7f90', '#469b8e', '#72b3a2', '#98c8b6', '#b9dbcc'],
+              borderRadius: 8
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true,
+              max: 4,
+              ticks: { color: axisColor }
+            },
+            x: {
+              ticks: { color: axisColor }
+            }
+          },
+          plugins: {
+            legend: { display: false }
+          }
+        }
+      });
+    }
+
+    function getParameterSource(data) {
+      if (data.parameters) return data.parameters;
+
+      if (data.category_results) {
+        const mapped = {};
+        Object.keys(criterionLabels).forEach(key => {
+          const item = data.category_results[key] || {};
+          mapped[key] = {
+            score: item.score ?? 0,
+            comment: Array.isArray(item.observations) && item.observations.length
+              ? item.observations.join(' ')
+              : 'Подробные наблюдения доступны ниже.'
+          };
+        });
+        return mapped;
+      }
+
+      return {};
+    }
+
+    function renderDebug(data) {
+      const meta = data?._meta || {};
+      const badges = [];
+
+      if (meta.model) badges.push(`<div class="badge">Модель: ${escapeHtml(meta.model)}</div>`);
+      if (meta.prompt_version) badges.push(`<div class="badge accent">Промпт: ${escapeHtml(meta.prompt_version)}</div>`);
+      if (meta.analysis_mode) badges.push(`<div class="badge">Режим: ${escapeHtml(meta.analysis_mode)}</div>`);
+      if (typeof meta.chunk_count !== 'undefined') badges.push(`<div class="badge">Chunks: ${escapeHtml(meta.chunk_count)}</div>`);
+      if (typeof meta.chunking_used !== 'undefined') badges.push(`<div class="badge">${meta.chunking_used ? 'Chunking: да' : 'Chunking: нет'}</div>`);
+      if (typeof meta.retry_used !== 'undefined') badges.push(`<div class="badge warning">${meta.retry_used ? 'Retry: да' : 'Retry: нет'}</div>`);
+      if (meta.parse_error) badges.push(`<div class="badge warning">Parse error</div>`);
+
+      let extra = '';
+      if (meta.raw_preview) {
+        extra += `<div class="debug-pre">${escapeHtml(meta.raw_preview)}</div>`;
+      } else if (meta.raw_message) {
+        extra += `<div class="debug-pre">${escapeHtml(meta.raw_message)}</div>`;
+      }
+
+      if (meta.parse_error && !extra) {
+        extra += `<div class="debug-pre">${escapeHtml(meta.parse_error)}</div>`;
+      }
+
+      debugBox.innerHTML = `
+        <h3>Техническая диагностика</h3>
+        <div class="status-row">${badges.join('') || '<div class="badge">Meta: нет данных</div>'}</div>
+        ${extra || '<p>Debug-поля отсутствуют или backend их не вернул.</p>'}
+      `;
+    }
+
+    function renderDetailBlocks(data) {
+      detailBlocks.innerHTML = '';
+
+      if (!data || analysisMode.value === 'overview' || analysisMode.value === 'all') return;
+
+      const cases = Array.isArray(data.cases) ? data.cases : [];
+      const uncertain = Array.isArray(data.uncertain_items) ? data.uncertain_items : [];
+      const ambiguous = Array.isArray(data.ambiguous_cases) ? data.ambiguous_cases : [];
+      const unresolved = Array.isArray(data.unresolved_passages) ? data.unresolved_passages : [];
+
+      const section = (title, content) => `
+        <div class="detail-block">
+          <h3>${title}</h3>
+          ${content}
+        </div>
+      `;
+
+      const casesHtml = cases.length
+        ? cases.slice(0, 20).map((c, index) => `
+            <div class="case-box">
+              <div><strong>Case ${index + 1}</strong></div>
+              <div style="margin-top:6px;"><strong>Source:</strong> ${escapeHtml(truncate(c.source_fragment || '—', 220))}</div>
+              <div><strong>Target:</strong> ${escapeHtml(truncate(c.target_fragment || '—', 220))}</div>
+              <div style="margin-top:6px;"><strong>Observation:</strong> ${escapeHtml(truncate(c.observation || '—', 280))}</div>
+              <div style="margin-top:6px;">
+                <strong>Parameters:</strong> ${escapeHtml((c.parameter || []).join(', ') || '—')}
+                |
+                <strong>Degree:</strong> ${escapeHtml(c.intervention_degree ?? '—')}
+                |
+                <strong>Confidence:</strong> ${escapeHtml(c.confidence || '—')}
+              </div>
+              <div style="margin-top:6px;"><strong>Evidence:</strong> ${escapeHtml(truncate(c.evidence || '—', 240))}</div>
+            </div>
+          `).join('')
+        : '<p>Cases отсутствуют.</p>';
+
+      const listify = (items) =>
+        items.length
+          ? `<ul>${items.slice(0, 12).map(item => `<li>${escapeHtml(truncate(typeof item === 'string' ? item : JSON.stringify(item), 240))}</li>`).join('')}</ul>`
+          : '<p>Нет данных.</p>';
+
+      detailBlocks.innerHTML = [
+        section(`Cases (${cases.length})`, casesHtml),
+        section('Спорные случаи', listify(ambiguous)),
+        section('Неуверенные случаи', listify(uncertain)),
+        section('Unresolved passages', listify(unresolved))
+      ].join('');
+    }
+
+    function renderResult(data) {
+      parallelResults.innerHTML = '';
+      lastResultData = data;
+
+      const summary = data.summary || 'Сводка отсутствует.';
+      const overall = typeof data.overall_score !== 'undefined' ? data.overall_score : '—';
+      const scaleMax = typeof data.scale_max !== 'undefined' ? data.scale_max : '4';
+
+      resultSummary.innerHTML = `
+        <h3>Итог анализа</h3>
+        <p><strong>Общий показатель вмешательства:</strong> ${overall} / ${scaleMax}</p>
+        <p style="margin-top:8px;">${escapeHtml(summary)}</p>
+      `;
+
+      const meta = data._meta || {};
+      metaBadges.innerHTML = `
+        <div class="badge">Модель: ${escapeHtml(meta.model || '—')}</div>
+        <div class="badge accent">Промпт: ${escapeHtml(meta.prompt_version || promptVersion.value)}</div>
+        <div class="badge">Режим: ${escapeHtml(analysisMode.options[analysisMode.selectedIndex].text)}</div>
+        <div class="badge">Chunking: ${meta.chunking_used ? `да (${escapeHtml(meta.chunk_count)})` : 'нет'}</div>
+      `;
+
+      const params = getParameterSource(data);
+      lastChartParams = params;
+
+      resultsTableWrap.innerHTML = `
+        <h3>Таблица параметров</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Параметр</th>
+              <th>Балл</th>
+              <th>Комментарий</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${Object.entries(criterionLabels).map(([key, label]) => `
+              <tr>
+                <td>${label}</td>
+                <td>${params[key]?.score ?? '—'}</td>
+                <td>${escapeHtml(params[key]?.comment || 'Комментарий отсутствует.')}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+
+      criteriaGrid.innerHTML = Object.entries(criterionLabels).map(([key, label]) => {
+        const item = params[key] || {};
+        return `
+          <article class="criterion-card">
+            <div class="criterion-head">
+              <div class="criterion-name">
+                <span>${label}</span>
+                <span tabindex="0" class="tooltip" data-tooltip="${criterionTooltips[key]}">?</span>
+              </div>
+              <div class="score">${item.score ?? '—'}</div>
+            </div>
+            <div class="criterion-comment">${escapeHtml(item.comment || 'Комментарий отсутствует.')}</div>
+          </article>
+        `;
+      }).join('');
+
+      renderDebug(data);
+      renderDetailBlocks(data);
+      renderChart(params);
+    }
+
+    function renderAllResults(data) {
+      lastResultData = data;
+      detailBlocks.innerHTML = '';
+
+      const results = data.results || {};
+      const overview = results.overview || {};
+      const detail = results.detail || {};
+      const research = results.research || {};
+
+      resultSummary.innerHTML = `
+        <h3>Итог анализа</h3>
+        <p><strong>Режим:</strong> Все три сразу</p>
+        <p style="margin-top:8px;">Ниже одновременно показаны результаты overview, detail и research.</p>
+      `;
+
+      metaBadges.innerHTML = `
+        <div class="badge">Модель: ${escapeHtml(data._meta?.model || '—')}</div>
+        <div class="badge accent">Промпт: ${escapeHtml(data._meta?.prompt_version || promptVersion.value)}</div>
+        <div class="badge">Режим: all</div>
+      `;
+
+      const chartParams = getParameterSource(overview);
+      lastChartParams = chartParams;
+      renderChart(chartParams);
+
+      resultsTableWrap.innerHTML = `
+        <h3>Сводная таблица режимов</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Режим</th>
+              <th>Общий балл</th>
+              <th>Краткая сводка</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Overview</td>
+              <td>${overview.overall_score ?? '—'}</td>
+              <td>${escapeHtml(truncate(overview.summary || '—', 260))}</td>
+            </tr>
+            <tr>
+              <td>Detail</td>
+              <td>${detail.overall_score ?? '—'}</td>
+              <td>${escapeHtml(truncate(detail.summary || '—', 260))}</td>
+            </tr>
+            <tr>
+              <td>Research</td>
+              <td>${research.overall_score ?? '—'}</td>
+              <td>${escapeHtml(truncate(research.summary || '—', 260))}</td>
+            </tr>
+          </tbody>
+        </table>
+      `;
+
+      criteriaGrid.innerHTML = '';
+
+      const block = (title, modeData, extraHtml = '') => `
+        <article class="mode-panel">
+          <h3>${title}</h3>
+          <div class="mini-meta">
+            <div class="badge">Балл: ${modeData?.overall_score ?? '—'} / ${modeData?.scale_max ?? '4'}</div>
+            <div class="badge">Cases: ${modeData?.coverage?.relevant_passages_count ?? (modeData?.cases?.length ?? '—')}</div>
+            <div class="badge">Uncertain: ${modeData?.coverage?.uncertain_count ?? '—'}</div>
+            <div class="badge">Chunking: ${modeData?._meta?.chunking_used ? `да (${modeData?._meta?.chunk_count || '—'})` : 'нет'}</div>
+          </div>
+          <div>${escapeHtml(truncate(modeData?.summary || 'Сводка отсутствует.', 420))}</div>
+          ${extraHtml}
+        </article>
+      `;
+
+      const detailCases = Array.isArray(detail.cases) ? detail.cases.slice(0, 3) : [];
+      const researchCases = Array.isArray(research.cases) ? research.cases.slice(0, 3) : [];
+      const researchUncertain = Array.isArray(research.uncertain_items) ? research.uncertain_items.slice(0, 3) : [];
+
+      parallelResults.innerHTML = [
+        block('Overview', overview),
+        block(
+          'Detail',
+          detail,
+          detailCases.length
+            ? `<h4>Примеры cases</h4>${detailCases.map(c => `
+                <div class="case-box">
+                  <div><strong>Source:</strong> ${escapeHtml(truncate(c.source_fragment || '—', 120))}</div>
+                  <div><strong>Target:</strong> ${escapeHtml(truncate(c.target_fragment || '—', 120))}</div>
+                  <div style="margin-top:6px;"><strong>Observation:</strong> ${escapeHtml(truncate(c.observation || '—', 180))}</div>
+                </div>
+              `).join('')}`
+            : '<h4>Примеры cases</h4><p>Cases отсутствуют.</p>'
+        ),
+        block(
+          'Research',
+          research,
+          `
+            <h4>Примеры cases</h4>
+            ${researchCases.length
+              ? researchCases.map(c => `
+                  <div class="case-box">
+                    <div><strong>Source:</strong> ${escapeHtml(truncate(c.source_fragment || '—', 120))}</div>
+                    <div><strong>Target:</strong> ${escapeHtml(truncate(c.target_fragment || '—', 120))}</div>
+                    <div style="margin-top:6px;"><strong>Observation:</strong> ${escapeHtml(truncate(c.observation || '—', 180))}</div>
+                  </div>
+                `).join('')
+              : '<p>Cases отсутствуют.</p>'
+            }
+            <h4>Неуверенные / спорные случаи</h4>
+            ${researchUncertain.length
+              ? `<ul>${researchUncertain.map(item => `<li>${escapeHtml(truncate(typeof item === 'string' ? item : JSON.stringify(item), 180))}</li>`).join('')}</ul>`
+              : '<p>Неуверенные случаи отсутствуют.</p>'
+            }
+          `
+        )
+      ].join('');
+
+      renderDebug({
+        _meta: data._meta || {}
+      });
+    }
+
+    function downloadText(filename, content, mime) {
+      const blob = new Blob([content], { type: mime });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function buildMarkdownReport(data) {
+      if (!data) return '# Результат анализа\n\nНет данных.';
+
+      if (data.mode === 'all') {
+        const r = data.results || {};
+        return `# Результат анализа
+
+## Overview
+
+${r.overview?.summary || '—'}
+
+## Detail
+
+${r.detail?.summary || '—'}
+
+## Research
+
+${r.research?.summary || '—'}
+`;
+      }
+
+      let md = `# Результат анализа
+
+**Общий балл:** ${data.overall_score ?? '—'} / ${data.scale_max ?? '4'}
+
+## Summary
+
+${data.summary || '—'}
+
+`;
+
+      const params = getParameterSource(data);
+      md += '## Параметры\n\n';
+
+      Object.entries(criterionLabels).forEach(([key, label]) => {
+        md += `### ${label}
+
+- Балл: ${params[key]?.score ?? '—'}
+- Комментарий: ${params[key]?.comment || '—'}
+
+`;
+      });
+
+      if (Array.isArray(data.cases) && data.cases.length) {
+        md += '## Cases\n\n';
+        data.cases.forEach((c, i) => {
+          md += `### Case ${i + 1}
+
+- Source: ${c.source_fragment || '—'}
+- Target: ${c.target_fragment || '—'}
+- Observation: ${c.observation || '—'}
+- Parameters: ${(c.parameter || []).join(', ') || '—'}
+- Degree: ${c.intervention_degree ?? '—'}
+- Confidence: ${c.confidence || '—'}
+- Evidence: ${c.evidence || '—'}
+
+`;
+        });
+      }
+
+      return md;
+    }
+
+    function exportJson() {
+      if (!lastResultData) {
+        showError('Сначала запустите анализ.');
+        return;
+      }
+      downloadText('analysis-result.json', JSON.stringify(lastResultData, null, 2), 'application/json');
+    }
+
+    function exportMd() {
+      if (!lastResultData) {
+        showError('Сначала запустите анализ.');
+        return;
+      }
+      downloadText('analysis-result.md', buildMarkdownReport(lastResultData), 'text/markdown');
+    }
+
+    async function analyze() {
+      clearError();
+
+      if (!sourceText.value.trim() && !sourceFile.files.length) {
+        showError('Пожалуйста, вставьте оригинал или загрузите файл оригинала.');
+        return;
+      }
+
+      if (!targetText.value.trim() && !targetFile.files.length) {
+        showError('Пожалуйста, вставьте перевод или загрузите файл перевода.');
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('sourceText', sourceText.value.trim());
+      formData.append('targetText', targetText.value.trim());
+      formData.append('sourceLang', sourceLang.value);
+      formData.append('targetLang', targetLang.value);
+      formData.append('analysisMode', analysisMode.value);
+      formData.append('promptVersion', promptVersion.value);
+
+      if (sourceFile.files[0]) formData.append('sourceFile', sourceFile.files[0]);
+      if (targetFile.files[0]) formData.append('targetFile', targetFile.files[0]);
+
+      loader.style.display = 'block';
+      analyzeButton.disabled = true;
+
+      try {
+        const response = await fetch('/api/analyze', {
+          method: 'POST',
+          body: formData
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || data.error) {
+          throw new Error(data.error || 'Не удалось выполнить анализ.');
+        }
+
+        if (analysisMode.value === 'all' || data.mode === 'all') {
+          renderAllResults(data);
+        } else {
+          renderResult(data);
+        }
+      } catch (error) {
+        showError(error.message);
+      } finally {
+        loader.style.display = 'none';
+        analyzeButton.disabled = false;
+      }
+    }
+
+    function resetUi() {
+      sourceText.value = '';
+      targetText.value = '';
+      sourceFile.value = '';
+      targetFile.value = '';
+      clearError();
+      lastResultData = null;
+
+      parallelResults.innerHTML = '';
+      detailBlocks.innerHTML = '';
+
+      resultSummary.innerHTML = `
+        <h3>Итог анализа</h3>
+        <p>После запуска здесь появится сводка по результатам сопоставления.</p>
+      `;
+
+      resultsTableWrap.innerHTML = `
+        <h3>Таблица параметров</h3>
+        <p>После запуска анализа здесь появится таблица с баллами и комментариями.</p>
+      `;
+
+      debugBox.innerHTML = `
+        <h3>Техническая диагностика</h3>
+        <p>После запуска здесь появятся meta/debug-поля, если backend их вернёт.</p>
+      `;
+
+      criteriaGrid.innerHTML = '';
+
+      metaBadges.innerHTML = `
+        <div class="badge">Модель: —</div>
+        <div class="badge">Промпт: —</div>
+        <div class="badge">Режим: —</div>
+      `;
+
+      if (scoresChart) {
+        scoresChart.destroy();
+        scoresChart = null;
+      }
+
+      renderChart({});
+    }
+
+    analyzeButton.addEventListener('click', analyze);
+    clearButton.addEventListener('click', resetUi);
+    exportJsonButton.addEventListener('click', exportJson);
+    exportMdButton.addEventListener('click', exportMd);
+    promptVersion.addEventListener('change', updateDescriptions);
+    analysisMode.addEventListener('change', updateDescriptions);
+
+    themeToggle.addEventListener('click', () => {
+      const nextTheme = rootEl.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      rootEl.setAttribute('data-theme', nextTheme);
+      updateDescriptions();
+      renderChart(lastChartParams || {});
+    });
+
+    updateDescriptions();
+    renderChart({});
+  </script>
+</body>
+</html>
+
